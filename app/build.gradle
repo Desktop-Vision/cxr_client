@@ -1,0 +1,69 @@
+def passwordProperties = new Properties()
+def passwordPropertiesFile = rootProject.file('app/passwords.properties')
+if (passwordPropertiesFile.exists()) {
+    passwordPropertiesFile.withReader('UTF-8') { reader -> passwordProperties.load(reader) }
+}
+
+def keystorePassword = passwordProperties.getProperty('keystorePassword')
+
+apply plugin: 'com.android.application'
+apply from: "$projectDir/build_sdk.gradle"
+apply plugin: 'kotlin-android'
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core-ktx:1.10.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
+
+android {
+    ndkVersion '24.0.8215888' // supports Apple Silicon
+
+    compileSdk 33
+    defaultConfig {
+        applicationId "com.valiventures.cloudxr.ovr"
+        minSdkVersion 25
+        targetSdkVersion 33
+        versionCode 1
+        versionName "1.0"
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('./keystore.jks')
+            storePassword keystorePassword
+            keyAlias 'key0'
+            keyPassword keystorePassword
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField "boolean", "ENABLE_DEBUG", "false"
+            signingConfig signingConfigs.release
+        }
+
+        debug {
+            buildConfigField "boolean", "ENABLE_DEBUG", "true"
+        }
+    }
+
+    namespace 'com.valiventures.cloudxr.ovr'
+    lint {
+        abortOnError false
+    }
+}
